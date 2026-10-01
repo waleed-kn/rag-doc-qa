@@ -20,6 +20,20 @@ export const config = {
     maxRetries: 4,
     baseDelayMs: 1000,
   },
+  retrieval: {
+    topK: 4,
+    // Starting guess. Tune it with real scores from query_log (see Step 7).
+    minScore: 0.55,
+  },
+  llm: {
+    // Tried in order. If the first is rate limited, the next one is used.
+    models: ["openai/gpt-oss-20b", "qwen/qwen3.8-27b"],
+    maxCompletionTokens: 800,
+    temperature: 0.2,
+  },
+  ask: {
+    maxQuestionChars: 500,
+  },
 };
 
 export function requireEnv(name: string): string {
