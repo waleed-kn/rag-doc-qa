@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "ask:test": "node scripts/ask-test.mjs",
     "migrate": "node --env-file=.env.local scripts/migrate.mjs",
     "ingest:test": "node scripts/ingest-test.mjs",
     "dev": "next dev",
