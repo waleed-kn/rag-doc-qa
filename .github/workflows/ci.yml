@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    env:
+      # Fake values on purpose. CI never talks to the database or the APIs.
+      DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+      GEMINI_API_KEY: placeholder
+      GROQ_API_KEY: placeholder
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
