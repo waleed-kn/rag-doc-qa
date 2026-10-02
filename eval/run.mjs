@@ -50,7 +50,7 @@ async function ask(question) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question }),
       });
-    } catch (err) {
+    } catch {
       console.error(`Cannot reach ${BASE_URL}. Is "npm run dev" running?`);
       process.exit(1);
     }

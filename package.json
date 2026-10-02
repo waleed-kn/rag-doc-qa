@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
     "ask:test": "node scripts/ask-test.mjs",
     "eval:draft": "node --env-file=.env.local eval/draft-questions.mjs",
     "eval": "node eval/run.mjs",

@@ -42,9 +42,25 @@ export default function UploadPanel({ onDocumentsChange }: Props) {
   }, [onDocumentsChange]);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    let cancelled = false;
 
+    listDocuments()
+      .then((docs) => {
+        if (cancelled) return;
+        setDocuments(docs);
+        onDocumentsChange(docs);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(
+          err instanceof ApiError ? err.message : "Could not load documents."
+        );
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [onDocumentsChange]);
   async function embed(documentId: string, total: number, name: string) {
     setBusyLabel(`Embedding ${name}...`);
     setProgress({ done: 0, total });
