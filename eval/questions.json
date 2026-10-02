@@ -4,7 +4,7 @@
     {
       "id": "a01",
       "type": "answerable",
-      "question": "What is the email address listed for Muhammad Waleed?",
+      "question": "What is the email address of the Full Stack Developer listed?",
       "keywords": [
         "waleedlinkeddin@gmail.com"
       ],
@@ -14,12 +14,32 @@
     {
       "id": "a02",
       "type": "answerable",
-      "question": "What is the email address listed in the contact section?",
+      "question": "What is the email address listed for Muhammad Waleed?",
+      "keywords": [
+        "waleedlinkeddin@gmail.com"
+      ],
+      "expectedPage": 1,
+      "expectedFilename": "notes.pdf"
+    },
+    {
+      "id": "a03",
+      "type": "answerable",
+      "question": "What is Muhammad Waleed's email address?",
       "keywords": [
         "waleedlinkeddin@gmail.com"
       ],
       "expectedPage": 1,
       "expectedFilename": "sample.pdf"
+    },
+    {
+      "id": "a04",
+      "type": "answerable",
+      "question": "What is the individual's email address?",
+      "keywords": [
+        "waleedlinkeddin@gmail.com"
+      ],
+      "expectedPage": 1,
+      "expectedFilename": "notes.pdf"
     },
     {
       "id": "u01",

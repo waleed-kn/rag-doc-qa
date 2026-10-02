@@ -73,14 +73,14 @@ export async function POST(req: NextRequest) {
     );
     const sources = answered
       ? chunks.map((c, i) => ({
-        index: i + 1,
-        documentId: c.documentId,
-        filename: c.filename,
-        page: c.pageNumber,
-        score: Number(c.score.toFixed(3)),
-        cited: citedNumbers.has(i + 1),
-        excerpt: c.content.slice(0, 200),
-      }))
+          index: i + 1,
+          documentId: c.documentId,
+          filename: c.filename,
+          page: c.pageNumber,
+          score: Number(c.score.toFixed(3)),
+          cited: citedNumbers.has(i + 1),
+          excerpt: c.content.slice(0, 200),
+        }))
       : [];
 
     await logQuery({
