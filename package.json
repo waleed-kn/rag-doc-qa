@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "ask:test": "node scripts/ask-test.mjs",
+    "eval:draft": "node --env-file=.env.local eval/draft-questions.mjs",
+    "eval": "node eval/run.mjs",
     "migrate": "node --env-file=.env.local scripts/migrate.mjs",
     "ingest:test": "node scripts/ingest-test.mjs",
     "dev": "next dev",

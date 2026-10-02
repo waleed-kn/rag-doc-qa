@@ -1,0 +1,17 @@
+{
+  "note": "Format example. Generate your real file with: npm run eval:draft",
+  "questions": [
+    {
+      "id": "a01",
+      "type": "answerable",
+      "question": "How long do customers have to request a refund?",
+      "keywords": ["30 days"],
+      "expectedPage": 1
+    },
+    {
+      "id": "u01",
+      "type": "unanswerable",
+      "question": "What is the capital of France?"
+    }
+  ]
+}

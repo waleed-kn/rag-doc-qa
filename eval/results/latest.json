@@ -1,0 +1,165 @@
+{
+  "ranAt": "2026-10-02T13:46:58.661Z",
+  "baseUrl": "http://localhost:3000",
+  "summary": {
+    "correct": 2,
+    "answerable": 2,
+    "falseRefusals": 0,
+    "refused": 5,
+    "unanswerable": 5,
+    "errors": 0,
+    "avgLatencySeconds": 2.26,
+    "passed": true
+  },
+  "thresholdSweep": [
+    {
+      "th": 0.3,
+      "recall": 1,
+      "refusal": 0,
+      "balanced": 0.5
+    },
+    {
+      "th": 0.35,
+      "recall": 1,
+      "refusal": 0,
+      "balanced": 0.5
+    },
+    {
+      "th": 0.4,
+      "recall": 1,
+      "refusal": 0,
+      "balanced": 0.5
+    },
+    {
+      "th": 0.45,
+      "recall": 1,
+      "refusal": 0.4,
+      "balanced": 0.7
+    },
+    {
+      "th": 0.5,
+      "recall": 1,
+      "refusal": 1,
+      "balanced": 1
+    },
+    {
+      "th": 0.55,
+      "recall": 1,
+      "refusal": 1,
+      "balanced": 1
+    },
+    {
+      "th": 0.6,
+      "recall": 1,
+      "refusal": 1,
+      "balanced": 1
+    },
+    {
+      "th": 0.65,
+      "recall": 0.5,
+      "refusal": 1,
+      "balanced": 0.75
+    },
+    {
+      "th": 0.7,
+      "recall": 0.5,
+      "refusal": 1,
+      "balanced": 0.75
+    },
+    {
+      "th": 0.75,
+      "recall": 0,
+      "refusal": 1,
+      "balanced": 0.5
+    },
+    {
+      "th": 0.8,
+      "recall": 0,
+      "refusal": 1,
+      "balanced": 0.5
+    },
+    {
+      "th": 0.85,
+      "recall": 0,
+      "refusal": 1,
+      "balanced": 0.5
+    }
+  ],
+  "suggestedMinScore": 0.5308411491758431,
+  "results": [
+    {
+      "id": "a01",
+      "type": "answerable",
+      "question": "What is the email address listed for Muhammad Waleed?",
+      "outcome": "pass",
+      "keywordOk": true,
+      "citationOk": true,
+      "topScore": 0.7276691571098699,
+      "latencyMs": 4348,
+      "model": "openai/gpt-oss-20b",
+      "answer": "The email address listed for Muhammad Waleed is waleedlinkeddin@gmail.com. [1]"
+    },
+    {
+      "id": "a02",
+      "type": "answerable",
+      "question": "What is the email address listed in the contact section?",
+      "outcome": "pass",
+      "keywordOk": true,
+      "citationOk": true,
+      "topScore": 0.6013153633749848,
+      "latencyMs": 4202,
+      "model": "openai/gpt-oss-20b",
+      "answer": "The email address listed in the contact section is waleedlinkeddin@gmail.com. [1]"
+    },
+    {
+      "id": "u01",
+      "type": "unanswerable",
+      "question": "What is the capital of France?",
+      "outcome": "pass",
+      "topScore": 0.4459323211807409,
+      "latencyMs": 3007,
+      "model": null,
+      "answer": "I could not find this in the uploaded documents."
+    },
+    {
+      "id": "u02",
+      "type": "unanswerable",
+      "question": "Who won the 2018 FIFA World Cup?",
+      "outcome": "pass",
+      "topScore": 0.46036693497670134,
+      "latencyMs": 1051,
+      "model": null,
+      "answer": "I could not find this in the uploaded documents."
+    },
+    {
+      "id": "u03",
+      "type": "unanswerable",
+      "question": "How do I bake sourdough bread?",
+      "outcome": "pass",
+      "topScore": 0.43695129312577374,
+      "latencyMs": 1083,
+      "model": null,
+      "answer": "I could not find this in the uploaded documents."
+    },
+    {
+      "id": "u04",
+      "type": "unanswerable",
+      "question": "What is 15 percent of 240?",
+      "outcome": "pass",
+      "topScore": 0.45987695460174915,
+      "latencyMs": 1106,
+      "model": null,
+      "answer": "I could not find this in the uploaded documents."
+    },
+    {
+      "id": "u05",
+      "type": "unanswerable",
+      "question": "What is the weather like in Tokyo today?",
+      "outcome": "pass",
+      "topScore": 0.4559442743136225,
+      "latencyMs": 1052,
+      "model": null,
+      "answer": "I could not find this in the uploaded documents."
+    }
+  ]
+}

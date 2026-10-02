@@ -22,7 +22,7 @@ export const config = {
   },
   retrieval: {
     topK: 4,
-    // Starting guess. Tune it with real scores from query_log (see Step 7).
+    // Starting guess. Tune it with `npm run eval` (see eval/README.md).
     minScore: 0.55,
   },
   llm: {

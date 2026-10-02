@@ -1,0 +1,50 @@
+{
+  "note": "Review every question. Add 2 or 3 unanswerable questions that are close to your document's topic, because those are the hardest test.",
+  "questions": [
+    {
+      "id": "a01",
+      "type": "answerable",
+      "question": "What is the email address listed for Muhammad Waleed?",
+      "keywords": [
+        "waleedlinkeddin@gmail.com"
+      ],
+      "expectedPage": 1,
+      "expectedFilename": "sample.pdf"
+    },
+    {
+      "id": "a02",
+      "type": "answerable",
+      "question": "What is the email address listed in the contact section?",
+      "keywords": [
+        "waleedlinkeddin@gmail.com"
+      ],
+      "expectedPage": 1,
+      "expectedFilename": "sample.pdf"
+    },
+    {
+      "id": "u01",
+      "type": "unanswerable",
+      "question": "What is the capital of France?"
+    },
+    {
+      "id": "u02",
+      "type": "unanswerable",
+      "question": "Who won the 2018 FIFA World Cup?"
+    },
+    {
+      "id": "u03",
+      "type": "unanswerable",
+      "question": "How do I bake sourdough bread?"
+    },
+    {
+      "id": "u04",
+      "type": "unanswerable",
+      "question": "What is 15 percent of 240?"
+    },
+    {
+      "id": "u05",
+      "type": "unanswerable",
+      "question": "What is the weather like in Tokyo today?"
+    }
+  ]
+}
