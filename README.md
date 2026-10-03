@@ -1,12 +1,22 @@
 # RAG Document Q&A
-   ![CI](https://github.com/waleed-kn/rag-doc-qa/actions/workflows/ci.yml/badge.svg)
-A zero-cost Retrieval-Augmented Generation (RAG) app. Upload documents, ask questions in plain language, and get answers that cite the exact source. Built the proper engineering way: requirements first, then design, then code.
 
-> **Status:** work in progress. The ingestion pipeline (upload, chunk, embed, store) is built. Question answering with Groq and the UI are next. See the [roadmap](#roadmap).
+![CI](https://github.com/waleed-kn/rag-doc-qa/actions/workflows/ci.yml/badge.svg)
 
-## Why this project
+Upload documents, ask questions in plain language, and get answers with **page-level citations**. If the answer is not in your documents, the app says so instead of guessing. Built the engineering way: requirements, design, code, tests, CI, Docker, and deployment, all on free tiers.
 
-Keyword search fails when the wording differs, and general chatbots invent answers that are not in your document. This app answers **only from your uploaded content**, shows where each answer came from, and says so when the answer is not there.
+**Live demo:** https://YOUR-LIVE-URL
+
+![Answer with sources](docs/images/answer.png)
+![Not found](docs/images/not-found.png)
+
+## Features
+
+- Upload PDF, TXT, or MD files (up to 4 MB)
+- Semantic search by meaning, not keywords
+- Answers written only from your documents, with filename, page, and excerpt for every source
+- Refuses questions that are not covered, before spending any LLM tokens
+- Progress bar for embedding, with resume for interrupted uploads
+- Rate limiting, tests, CI, and a Docker image build
 
 ## How it works
 
@@ -24,7 +34,9 @@ flowchart LR
         Q[Question] --> QE[Embed question]
         QE --> S[Similarity search]
         E --> S
-        S --> P[Top chunks + question]
+        S --> T{Score above threshold?}
+        T -- no --> N[Not found]
+        T -- yes --> P[Top chunks + question]
         P --> G[Groq writes answer]
         G --> R[Answer + citations]
     end
@@ -32,80 +44,91 @@ flowchart LR
 
 | Part | Job |
 |------|-----|
-| Next.js | App and API routes |
-| Gemini `gemini-embedding-001` | Turns text into 768-number vectors (finds) |
-| Neon Postgres + pgvector | Stores chunks and vectors, runs similarity search (remembers) |
-| Groq | Writes the final answer from retrieved chunks (writes) |
+| Next.js + TypeScript | UI and API routes |
+| Gemini `gemini-embedding-001` (768 dimensions) | Turns text into vectors (finds) |
+| Neon Postgres + pgvector (HNSW, cosine) | Stores chunks and vectors, runs similarity search (remembers) |
+| Groq | Writes the answer from the retrieved chunks only (writes) |
 
-## Tech stack
+## Evaluation
 
-- **App:** Next.js (App Router), TypeScript
-- **Database:** Neon Postgres with pgvector (HNSW index, cosine distance)
-- **Embeddings:** Gemini, 768 dimensions
-- **LLM:** Groq free tier
-- **PDF parsing:** unpdf
-- **Cost:** $0, free tiers only
+Measured with a hand-checked question set (`eval/questions.json`) run by `npm run eval`.
+
+| Metric | Result | Target |
+|--------|--------|--------|
+| Answerable questions answered correctly and cited | [X]/[N] ([X]%) | 80% |
+| Out-of-scope questions correctly refused | [Y]/[M] ([Y]%) | 80% |
+| Average latency | [Z]s | |
+
+The eval also picks the similarity threshold. My first run scored 0% on citations because the model ignored the citation format. A stricter prompt fixed it, and I only found the problem because I measured.
 
 ## Key design decisions
 
-- **Resumable ingestion.** Chunks are saved first, then embedded in small batches. A failed batch is safe to retry, and it fits serverless time limits and API rate limits.
-- **Chunking per page.** A chunk never crosses a page boundary, so page citations stay accurate.
-- **One embedding config.** The model setting, the database column, and the config file all use 768 dimensions. `/api/health` checks that they match.
-- **Provider interfaces.** Embedding and LLM providers sit behind interfaces, so swapping them means changing one file.
-- **Citations from the database.** Sources come from stored rows, not from the LLM, so the model cannot invent a source.
+- **Resumable ingestion.** Chunks are saved first, then embedded in small batches. A failed batch is safe to retry, which respects API rate limits and serverless time limits.
+- **Chunking per page.** A chunk never crosses a page boundary, so citations point to the right page.
+- **One embedding config.** The model setting, the database column, and the config file all use 768 dimensions. A unit test and the `/api/health` endpoint both check that they match.
+- **Two-layer "not found".** A similarity threshold refuses before calling the LLM, which also saves tokens. A prompt rule is the backup.
+- **Citations from the database.** Sources come from stored rows, not from the model, so it cannot invent one.
+- **Model fallback.** If the first Groq model is rate limited, the second one answers.
+- **Provider interfaces.** Embedding and LLM providers sit behind interfaces, so swapping them means editing one file.
+- **Postgres-backed rate limiting.** Atomic counters in the existing database, shared across serverless instances, at no extra cost.
 
-Full details are in [`docs/01-requirements.md`](docs/01-requirements.md) and [`docs/02-system-design.md`](docs/02-system-design.md).
+## Tech stack
 
-## Getting started
+Next.js (App Router), TypeScript, Tailwind, Postgres with pgvector on Neon, Gemini embeddings, Groq, Vitest, GitHub Actions, Docker, Vercel. Everything runs on free tiers.
 
-### Prerequisites
+## Run it locally
 
-- Node.js 20.6 or newer
-- A free [Neon](https://neon.tech) database
-- A free [Gemini API key](https://aistudio.google.com)
-
-### Setup
+Requirements: Node.js 22 or newer, a free [Neon](https://neon.tech) database, a [Gemini API key](https://aistudio.google.com), and a [Groq API key](https://console.groq.com).
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/rag-doc-qa.git
+git clone https://github.com/waleed-kn/rag-doc-qa.git
 cd rag-doc-qa
 npm install
 ```
 
-Copy `.env.example` to `.env.local` and fill in your values:
+Create `.env.local` (never commit it):
 
 ```bash
-DATABASE_URL=postgresql://user:password@your-host.neon.tech/neondb?sslmode=require
-GEMINI_API_KEY=your_gemini_key_here
+DATABASE_URL=postgresql://user:password@host.neon.tech/dbname?sslmode=require
+GEMINI_API_KEY=your_key
+GROQ_API_KEY=your_key
+RATE_LIMIT_DISABLED=true
 ```
-
-Create the database tables:
 
 ```bash
-npm run migrate
+npm run migrate   # create the tables
+npm run dev       # http://localhost:3000
 ```
 
-Start the app:
+Check `http://localhost:3000/api/health`. You should see `{"status":"ok","dbDimension":768,"configDimension":768}`.
 
-```bash
-npm run dev
-```
+### Useful commands
 
-Check that everything is connected by opening `http://localhost:3000/api/health`. You should see:
+| Command | Purpose |
+|---------|---------|
+| `npm test` | Run the unit tests |
+| `npm run typecheck` | Type-check with TypeScript |
+| `npm run lint` | Lint the code |
+| `npm run eval:draft` | Draft evaluation questions from your documents |
+| `npm run eval` | Score the app and suggest a similarity threshold |
+| `npm run ingest:test -- ./file.pdf` | Ingest a file from the terminal |
+| `npm run ask:test -- "question"` | Ask a question from the terminal |
 
-```json
-{"status":"ok","dbDimension":768,"configDimension":768}
-```
+## Quality and automation
 
-### Try the ingestion pipeline
+- **25+ unit tests** cover chunking, prompt building, retry logic, rate-limit helpers, and config consistency.
+- **CI** runs lint, type-check, tests, and a production build on every push, then builds the Docker image.
+- **Docker:** multi-stage `Dockerfile` with a small runtime image that runs as a non-root user.
 
-With the dev server running, in a second terminal:
+## Rate limits
 
-```bash
-npm run ingest:test -- ./sample.pdf
-```
+| Action | Per visitor | Whole app |
+|--------|-------------|-----------|
+| Ask | 3 per minute, 20 per day | 5 per minute, 100 per day |
+| Upload | 5 per hour | |
+| Embed | 30 per minute | |
 
-It uploads the file, then calls the process endpoint until every chunk is embedded.
+These protect the free-tier quotas of Groq and Gemini.
 
 ## API
 
@@ -115,40 +138,37 @@ It uploads the file, then calls the process endpoint until every chunk is embedd
 | POST | `/api/documents/:id/process` | Embed the next batch of chunks |
 | GET | `/api/documents` | List documents |
 | DELETE | `/api/documents/:id` | Delete a document and its chunks |
-| GET | `/api/health` | Check database and dimension config |
-| POST | `/api/ask` | Ask a question *(coming next)* |
+| POST | `/api/ask` | Ask a question, get a cited answer |
+| GET | `/api/health` | Check the database and the dimension config |
 
-## Limits
+## Known limitations
 
-- Upload size: 4 MB per file (serverless request body limit)
-- Supported files: PDF, TXT, MD
-- Scanned PDFs (images without text) are not supported yet
-- Groq free-tier rate limits apply, so heavy use may need to wait
-
-## Roadmap
-
-- [x] Requirements and system design
-- [x] Database schema and migration
-- [x] Upload, parsing, and per-page chunking
-- [x] Resumable embedding with retry and backoff
-- [ ] Retrieval and answering with citations (Groq)
-- [ ] "Not found" handling with a similarity threshold
-- [ ] Chat UI
-- [ ] Evaluation set (20 answerable and 5 unanswerable questions)
-- [ ] Tests, Docker, and CI with GitHub Actions
-- [ ] Public deployment on Vercel
+- No user accounts: visitors share one document pool, and anyone can delete any document. Use only neutral documents in the live demo.
+- Scanned PDFs (images without text) are not supported.
+- Free-tier limits apply: Groq tokens per day, Gemini rate limits, and a 4 MB upload cap from the platform's request body limit.
+- Retrieval uses vector search only. Re-ranking and hybrid keyword search are future work.
 
 ## Project structure
 
 ```text
 rag-doc-qa/
-├── docs/               # requirements and system design
-├── migrations/         # SQL migrations
-├── scripts/            # migrate and ingest-test scripts
-└── src/
-    ├── app/api/        # route handlers
-    └── lib/            # config, db, parsing, chunking, embeddings, retry, errors
+├── docs/            # requirements, system design, screenshots
+├── eval/            # question set and scoring script
+├── migrations/      # SQL migrations
+├── scripts/         # migrate, ingest-test, ask-test
+├── tests/           # unit tests
+├── src/
+│   ├── app/api/     # route handlers
+│   ├── components/  # upload panel and chat
+│   └── lib/         # config, db, parsing, chunking, embeddings, llm, retrieval, rate limiting
+├── Dockerfile
+└── .github/workflows/ci.yml
 ```
+
+## Documentation
+
+- [Requirements](docs/01-requirements.md)
+- [System design](docs/02-system-design.md)
 
 ## License
 
