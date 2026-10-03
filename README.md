@@ -4,10 +4,9 @@
 
 Upload documents, ask questions in plain language, and get answers with **page-level citations**. If the answer is not in your documents, the app says so instead of guessing. Built the engineering way: requirements, design, code, tests, CI, Docker, and deployment, all on free tiers.
 
-**Live demo:** https://YOUR-LIVE-URL
+**Live demo:** https://rag-doc-qa-beta.vercel.app/
 
-![Answer with sources](docs/images/answer.png)
-![Not found](docs/images/not-found.png)
+
 
 ## Features
 
