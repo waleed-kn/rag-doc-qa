@@ -13,23 +13,31 @@ import {
 const MAX_BYTES = 4 * 1024 * 1024;
 const ALLOWED = ["pdf", "txt", "md"];
 
+const STATUS_LABEL: Record<DocumentItem["status"], string> = {
+  ready: "Ready",
+  processing: "Processing",
+  pending: "Waiting",
+  failed: "Failed",
+};
+
 interface Props {
   onDocumentsChange: (docs: DocumentItem[]) => void;
 }
-
-const statusStyle: Record<DocumentItem["status"], string> = {
-  ready: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  processing: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
-  pending: "bg-neutral-200 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-200",
-  failed: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-};
 
 export default function UploadPanel({ onDocumentsChange }: Props) {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [busyLabel, setBusyLabel] = useState<string | null>(null);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  const busy = busyLabel !== null;
+  const pct =
+    progress && progress.total > 0
+      ? Math.round((progress.done / progress.total) * 100)
+      : 0;
 
   const refresh = useCallback(async () => {
     try {
@@ -61,14 +69,16 @@ export default function UploadPanel({ onDocumentsChange }: Props) {
       cancelled = true;
     };
   }, [onDocumentsChange]);
+
   async function embed(documentId: string, total: number, name: string) {
-    setBusyLabel(`Embedding ${name}...`);
+    setBusyLabel(`Preparing ${name}`);
     setProgress({ done: 0, total });
     await embedAll(documentId, total, (done, t) => setProgress({ done, total: t }));
   }
 
   async function run(task: () => Promise<void>) {
     setError(null);
+    setConfirmId(null);
     try {
       await task();
     } catch (err) {
@@ -83,15 +93,15 @@ export default function UploadPanel({ onDocumentsChange }: Props) {
   function handleFile(file: File) {
     const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
     if (!ALLOWED.includes(ext)) {
-      setError("Only PDF, TXT, and MD files are supported.");
+      setError("Only PDF, TXT, and Markdown files are supported.");
       return;
     }
     if (file.size > MAX_BYTES) {
-      setError("File is too large. Maximum is 4 MB.");
+      setError("This file is over 4 MB. Choose a smaller file.");
       return;
     }
     void run(async () => {
-      setBusyLabel(`Uploading ${file.name}...`);
+      setBusyLabel(`Uploading ${file.name}`);
       const created = await uploadDocument(file);
       await embed(created.documentId, created.totalChunks, file.name);
     });
@@ -101,92 +111,176 @@ export default function UploadPanel({ onDocumentsChange }: Props) {
     void run(() => embed(doc.id, doc.chunkCount, doc.filename));
   }
 
-  function remove(doc: DocumentItem) {
-    if (!window.confirm(`Delete "${doc.filename}"?`)) return;
+  function confirmRemove(doc: DocumentItem) {
     void run(() => deleteDocument(doc.id));
   }
 
-  const busy = busyLabel !== null;
-  const pct = progress && progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0;
+  function openPicker() {
+    if (!busy) fileInput.current?.click();
+  }
 
   return (
-    <section className="rounded-xl border border-neutral-300 p-4 dark:border-neutral-700">
-      <h2 className="mb-3 text-lg font-semibold">Documents</h2>
+    <section className="panel">
+      <div className="panel-head">
+        <h2 className="panel-title">Documents</h2>
+        <p className="panel-sub">Add the files you want to ask about.</p>
+      </div>
 
       <input
         ref={fileInput}
         type="file"
         accept=".pdf,.txt,.md"
-        className="hidden"
+        hidden
         onChange={(e) => {
           const file = e.target.files?.[0];
           e.target.value = "";
           if (file) handleFile(file);
         }}
       />
-      <button
-        onClick={() => fileInput.current?.click()}
-        disabled={busy}
-        className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+
+      <div
+        className={`dropzone${dragging ? " is-dragging" : ""}${busy ? " is-disabled" : ""}`}
+        role="button"
+        tabIndex={busy ? -1 : 0}
+        aria-disabled={busy}
+        onClick={openPicker}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openPicker();
+          }
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (!busy) setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragging(false);
+          const file = e.dataTransfer.files?.[0];
+          if (file && !busy) handleFile(file);
+        }}
       >
-        Upload PDF, TXT, or MD
-      </button>
-      <p className="mt-1 text-xs text-neutral-500">Max 4 MB. Scanned PDFs are not supported.</p>
+        <svg
+          className="dropzone-icon"
+          width="26"
+          height="26"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 16V4" />
+          <path d="m7 9 5-5 5 5" />
+          <path d="M5 20h14" />
+        </svg>
+        <p className="dropzone-title">Drop a file here or browse</p>
+        <p className="dropzone-hint">
+          PDF, TXT, or Markdown, up to 4 MB. Scanned PDFs aren&apos;t supported.
+        </p>
+      </div>
 
       {busy && (
-        <div className="mt-3">
-          <p className="text-sm">{busyLabel}</p>
+        <div className="progress" role="status" aria-live="polite">
+          <div className="progress-label">
+            <span>{busyLabel}</span>
+            {progress && (
+              <span>
+                {progress.done} of {progress.total} sections
+              </span>
+            )}
+          </div>
           {progress && (
-            <>
-              <div className="mt-1 h-2 w-full overflow-hidden rounded bg-neutral-200 dark:bg-neutral-700">
-                <div className="h-full bg-blue-600 transition-all" style={{ width: `${pct}%` }} />
-              </div>
-              <p className="mt-1 text-xs text-neutral-500">
-                {progress.done} of {progress.total} chunks
-              </p>
-            </>
+            <div
+              className="progress-track"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={pct}
+            >
+              <div className="progress-fill" style={{ width: `${pct}%` }} />
+            </div>
           )}
         </div>
       )}
 
       {error && (
-        <p className="mt-3 rounded bg-red-50 p-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+        <p className="alert" role="alert">
           {error}
         </p>
       )}
 
-      <ul className="mt-4 space-y-2">
-        {documents.length === 0 && (
-          <li className="text-sm text-neutral-500">No documents yet.</li>
-        )}
-        {documents.map((doc) => (
-          <li key={doc.id} className="rounded-lg border border-neutral-200 p-2 text-sm dark:border-neutral-700">
-            <p className="truncate font-medium" title={doc.filename}>{doc.filename}</p>
-            <p className="text-xs text-neutral-500">
-              {doc.pageCount ?? 1} page(s) · {doc.chunkCount} chunks
-            </p>
-            <div className="mt-2 flex items-center gap-2">
-              <span className={`rounded px-2 py-0.5 text-xs ${statusStyle[doc.status]}`}>{doc.status}</span>
-              {doc.status !== "ready" && (
-                <button
-                  onClick={() => resume(doc)}
-                  disabled={busy}
-                  className="text-xs text-blue-600 hover:underline disabled:opacity-50"
-                >
-                  Resume
-                </button>
-              )}
-              <button
-                onClick={() => remove(doc)}
-                disabled={busy}
-                className="ml-auto text-xs text-red-600 hover:underline disabled:opacity-50"
-              >
-                Delete
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
+      {documents.length === 0 ? (
+        <p className="empty-list">No documents yet.</p>
+      ) : (
+        <ul className="doc-list">
+          {documents.map((doc) => {
+            const pages = doc.pageCount ?? 1;
+            return (
+              <li key={doc.id} className="doc">
+                <p className="doc-name" title={doc.filename}>
+                  {doc.filename}
+                </p>
+                <p className="doc-meta">
+                  {pages} {pages === 1 ? "page" : "pages"}, {doc.chunkCount} sections
+                </p>
+                <div className="doc-row">
+                  <span className={`status status-${doc.status}`}>
+                    <span className="dot" aria-hidden="true" />
+                    {STATUS_LABEL[doc.status]}
+                  </span>
+
+                  {confirmId === doc.id ? (
+                    <span className="doc-actions">
+                      <span className="confirm-text">Delete this file?</span>
+                      <button
+                        type="button"
+                        className="link-btn link-btn-danger"
+                        onClick={() => confirmRemove(doc)}
+                        disabled={busy}
+                      >
+                        Yes, delete
+                      </button>
+                      <button
+                        type="button"
+                        className="link-btn"
+                        onClick={() => setConfirmId(null)}
+                      >
+                        Keep
+                      </button>
+                    </span>
+                  ) : (
+                    <span className="doc-actions">
+                      {doc.status !== "ready" && (
+                        <button
+                          type="button"
+                          className="link-btn"
+                          onClick={() => resume(doc)}
+                          disabled={busy}
+                        >
+                          Resume
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="link-btn"
+                        onClick={() => setConfirmId(doc.id)}
+                        disabled={busy}
+                      >
+                        Delete
+                      </button>
+                    </span>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </section>
   );
 }
