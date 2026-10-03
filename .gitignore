@@ -40,3 +40,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+node_modules
+.next
+.git
+.github
+.env*
+*.pdf
+eval/results
+docs
+README.md

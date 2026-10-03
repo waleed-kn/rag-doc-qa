@@ -1,5 +1,5 @@
 # RAG Document Q&A
-
+   ![CI](https://github.com/waleed-kn/rag-doc-qa/actions/workflows/ci.yml/badge.svg)
 A zero-cost Retrieval-Augmented Generation (RAG) app. Upload documents, ask questions in plain language, and get answers that cite the exact source. Built the proper engineering way: requirements first, then design, then code.
 
 > **Status:** work in progress. The ingestion pipeline (upload, chunk, embed, store) is built. Question answering with Groq and the UI are next. See the [roadmap](#roadmap).
