@@ -4,7 +4,8 @@ export class AppError extends Error {
   constructor(
     public code: string,
     message: string,
-    public status: number
+    public status: number,
+    public retryAfterSeconds?: number
   ) {
     super(message);
   }
@@ -14,7 +15,12 @@ export function errorResponse(err: unknown) {
   if (err instanceof AppError) {
     return NextResponse.json(
       { error: { code: err.code, message: err.message } },
-      { status: err.status }
+      {
+        status: err.status,
+        headers: err.retryAfterSeconds
+          ? { "Retry-After": String(err.retryAfterSeconds) }
+          : undefined,
+      }
     );
   }
   console.error(err);

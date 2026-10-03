@@ -4,12 +4,15 @@ import { getPool } from "@/lib/db";
 import { AppError, errorResponse } from "@/lib/errors";
 import { parseFile } from "@/lib/parsing";
 import { chunkPages } from "@/lib/chunking";
+import { limitUpload } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
 // Upload a file, split it into chunks, store them (no embeddings yet).
 export async function POST(req: NextRequest) {
   try {
+    await limitUpload(req);
+
     const form = await req.formData();
     const file = form.get("file");
 

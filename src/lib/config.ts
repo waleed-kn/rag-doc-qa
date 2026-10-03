@@ -34,6 +34,16 @@ export const config = {
   ask: {
     maxQuestionChars: 500,
   },
+  rateLimit: {
+    ask: {
+      perIpPerMinute: 3,
+      perIpPerDay: 20,
+      globalPerMinute: 5,
+      globalPerDay: 100,
+    },
+    upload: { perIpPerHour: 5 },
+    process: { perIpPerMinute: 30 },
+  },
 };
 
 export function requireEnv(name: string): string {

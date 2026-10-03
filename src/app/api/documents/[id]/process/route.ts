@@ -3,6 +3,7 @@ import { config } from "@/lib/config";
 import { getPool, toVectorLiteral } from "@/lib/db";
 import { AppError, assertUuid, errorResponse } from "@/lib/errors";
 import { getEmbeddingProvider } from "@/lib/embeddings";
+import { limitProcess } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 // Check your Vercel plan's current maximum and adjust batchSize to fit.
@@ -10,10 +11,12 @@ export const maxDuration = 60;
 
 // Embeds the next batch of chunks. The client calls this until remaining = 0.
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await limitProcess(req);
+
     const { id } = await params;
     assertUuid(id);
     const pool = getPool();

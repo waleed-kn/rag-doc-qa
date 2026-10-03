@@ -5,6 +5,7 @@ import { retrieve } from "@/lib/retrieval";
 import { buildPrompt, NOT_FOUND_MESSAGE } from "@/lib/prompt";
 import { generateAnswer } from "@/lib/llm";
 import { logQuery } from "@/lib/query-log";
+import { limitAsk } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -13,6 +14,8 @@ export async function POST(req: NextRequest) {
   const started = Date.now();
 
   try {
+    await limitAsk(req);
+
     let body: { question?: unknown };
     try {
       body = await req.json();
